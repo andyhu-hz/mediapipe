@@ -110,6 +110,7 @@ class FaceLandmarkerHelper(
                     .setNumFaces(maxNumFaces)
                     .setOutputFaceBlendshapes(true)
                     .setRunningMode(runningMode)
+                    .setOutputFacialTransformationMatrixes(true)
 
             // The ResultListener and ErrorListener only use for LIVE_STREAM mode.
             if (runningMode == RunningMode.LIVE_STREAM) {

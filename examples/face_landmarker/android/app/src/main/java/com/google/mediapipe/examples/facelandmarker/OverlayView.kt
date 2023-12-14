@@ -22,15 +22,20 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import android.view.SurfaceView;
+
 import androidx.core.content.ContextCompat
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
 import kotlin.math.max
 import kotlin.math.min
+import android.content.res.AssetManager
+import android.opengl.GLSurfaceView
+import androidx.appcompat.app.AppCompatActivity
 
-class OverlayView(context: Context?, attrs: AttributeSet?) :
-    View(context, attrs) {
+class OverlayView(context: Context?, attrs: AttributeSet? = null) :
+    GLSurfaceView(context, attrs) {
 
     private var results: FaceLandmarkerResult? = null
     private var linePaint = Paint()
@@ -41,8 +46,16 @@ class OverlayView(context: Context?, attrs: AttributeSet?) :
     private var imageHeight: Int = 1
 
     init {
+        setEGLContextClientVersion(3);
+        // Set the renderer
+        setRenderer(MyGLRenderer())
         initPaints()
+        System.loadLibrary("glview")
+        val assetManager: AssetManager by lazy { context!!.assets }
+        NativeSetAssets(assetManager)
     }
+
+    external fun NativeSetAssets(assetManager: AssetManager)
 
     fun clear() {
         results = null
@@ -69,9 +82,7 @@ class OverlayView(context: Context?, attrs: AttributeSet?) :
             clear()
             return
         }
-
         results?.let { faceLandmarkerResult ->
-
             if( faceLandmarkerResult.faceBlendshapes().isPresent) {
                 faceLandmarkerResult.faceBlendshapes().get().forEach {
                     it.forEach {
@@ -79,7 +90,6 @@ class OverlayView(context: Context?, attrs: AttributeSet?) :
                     }
                 }
             }
-
             for(landmark in faceLandmarkerResult.faceLandmarks()) {
                 for(normalizedLandmark in landmark) {
                     canvas.drawPoint(normalizedLandmark.x() * imageWidth * scaleFactor, normalizedLandmark.y() * imageHeight * scaleFactor, pointPaint)

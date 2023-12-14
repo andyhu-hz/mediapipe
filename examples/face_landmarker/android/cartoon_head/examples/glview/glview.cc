@@ -8,39 +8,19 @@
 #include <vector>
 #include <sstream>
 
-#include <GL/glew.h>
+//#include <GL/glew.h>
 
-#define GLFW_INCLUDE_GLU
-#include <GLFW/glfw3.h>
-
-#ifdef _WIN32
-#include "../common/trackball.h"
-#else
+#include <EGL/egl.h>
+#include <GLES3/gl3.h>
 #include "trackball.h"
-#endif
-
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
-#ifdef _WIN32
-#include "../../tiny_gltf.h"
-#else
-#include "tiny_gltf.h"
-#endif
+#include <android/asset_manager_jni.h>
+#include "glview.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
-
-#define CheckGLErrors(desc)                                                   \
-  {                                                                           \
-    GLenum e = glGetError();                                                  \
-    if (e != GL_NO_ERROR) {                                                   \
-      printf("OpenGL error in \"%s\": %d (%d) %s:%d\n", desc, e, e, __FILE__, \
-             __LINE__);                                                       \
-      exit(20);                                                               \
-    }                                                                         \
-  }
-
 #define CAM_Z (3.0f)
 int width = 768;
 int height = 768;
@@ -91,7 +71,7 @@ void main(void)
 )glsl";
 
 const std::string shaderFrag = R"glsl(
-#version 330
+#version 300 es
 
 uniform sampler2D diffuseTex;
 uniform int uIsCurve;
@@ -117,7 +97,7 @@ bool mouseRightPressed;
 float curr_quat[4];
 float prev_quat[4];
 
-GLFWwindow *window;
+//GLFWwindow *window;
 
 typedef struct {
   GLuint vb;
@@ -202,145 +182,6 @@ static std::string GetFilePathExtension(const std::string &FileName) {
   if (FileName.find_last_of(".") != std::string::npos)
     return FileName.substr(FileName.find_last_of(".") + 1);
   return "";
-}
-
-bool LoadShader(GLenum shaderType,  // GL_VERTEX_SHADER or GL_FRAGMENT_SHADER(or maybe GL_COMPUTE_SHADER)
-                GLuint &shader, const std::string& shaderCode) {
-  GLint val = 0;
-
-  // free old shader/program
-  if (shader != 0) {
-    glDeleteShader(shader);
-  }
-
-  std::vector<GLchar> srcbuf(shaderCode.size() + 1);
-  memcpy(&srcbuf[0], shaderCode.c_str(), shaderCode.size());
-  srcbuf[shaderCode.size()] = 0;
-
-  const GLchar *srcs[1];
-  srcs[0] = &srcbuf.at(0);
-
-  shader = glCreateShader(shaderType);
-  glShaderSource(shader, 1, srcs, NULL);
-  glCompileShader(shader);
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &val);
-  if (val != GL_TRUE) {
-    char log[4096];
-    GLsizei msglen;
-    glGetShaderInfoLog(shader, 4096, &msglen, log);
-    printf("%s\n", log);
-    // assert(val == GL_TRUE && "failed to compile shader");
-    printf("ERR: Failed to load or compile shader [ %d ]\n", shaderType);
-    return false;
-  }
-
-  printf("Load shader [ %d ] OK\n", shaderType);
-  return true;
-}
-
-bool LinkShader(GLuint &prog, GLuint &vertShader, GLuint &fragShader) {
-  GLint val = 0;
-
-  if (prog != 0) {
-    glDeleteProgram(prog);
-  }
-
-  prog = glCreateProgram();
-
-  glAttachShader(prog, vertShader);
-  glAttachShader(prog, fragShader);
-  glLinkProgram(prog);
-
-  glGetProgramiv(prog, GL_LINK_STATUS, &val);
-  assert(val == GL_TRUE && "failed to link shader");
-
-  printf("Link shader OK\n");
-
-  return true;
-}
-
-void reshapeFunc(GLFWwindow *window, int w, int h) {
-//  (void)window;
-  int fb_w, fb_h;
-  glfwGetFramebufferSize(window, &fb_w, &fb_h);
-  glViewport(0, 0, fb_w, fb_h);
-
-  width = w;
-  height = h;
-}
-
-void keyboardFunc(GLFWwindow *window, int key, int scancode, int action,
-                  int mods) {
-  (void)scancode;
-  (void)mods;
-  if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-    // Close window
-    if (key == GLFW_KEY_Q || key == GLFW_KEY_ESCAPE) {
-      glfwSetWindowShouldClose(window, GL_TRUE);
-    }
-  }
-}
-
-void clickFunc(GLFWwindow *window, int button, int action, int mods) {
-  double x, y;
-  glfwGetCursorPos(window, &x, &y);
-
-  bool shiftPressed = (mods & GLFW_MOD_SHIFT);
-  bool ctrlPressed = (mods & GLFW_MOD_CONTROL);
-
-  if ((button == GLFW_MOUSE_BUTTON_LEFT) && (!shiftPressed) && (!ctrlPressed)) {
-    mouseLeftPressed = true;
-    mouseMiddlePressed = false;
-    mouseRightPressed = false;
-    if (action == GLFW_PRESS) {
-      int id = -1;
-      // int id = ui.Proc(x, y);
-      if (id < 0) {  // outside of UI
-        trackball(prev_quat, 0.0, 0.0, 0.0, 0.0);
-      }
-    } else if (action == GLFW_RELEASE) {
-      mouseLeftPressed = false;
-    }
-  }
-  if ((button == GLFW_MOUSE_BUTTON_RIGHT) ||
-      ((button == GLFW_MOUSE_BUTTON_LEFT) && ctrlPressed)) {
-    if (action == GLFW_PRESS) {
-      mouseRightPressed = true;
-      mouseLeftPressed = false;
-      mouseMiddlePressed = false;
-    } else if (action == GLFW_RELEASE) {
-      mouseRightPressed = false;
-    }
-  }
-  if ((button == GLFW_MOUSE_BUTTON_MIDDLE) ||
-      ((button == GLFW_MOUSE_BUTTON_LEFT) && shiftPressed)) {
-    if (action == GLFW_PRESS) {
-      mouseMiddlePressed = true;
-      mouseLeftPressed = false;
-      mouseRightPressed = false;
-    } else if (action == GLFW_RELEASE) {
-      mouseMiddlePressed = false;
-    }
-  }
-}
-
-void motionFunc(GLFWwindow *window, double mouse_x, double mouse_y) {
-  (void)window;
-  float rotScale = -1.0f;
-  float transScale = 2.0f;
-
-  if (mouseLeftPressed) {
-    trackball(prev_quat, rotScale * (2.0f * prevMouseX - width) / (float)width,
-              rotScale * (height - 2.0f * prevMouseY) / (float)height,
-              rotScale * (2.0f * mouse_x - width) / (float)width,
-              rotScale * (height - 2.0f * mouse_y) / (float)height);
-
-    add_quats(prev_quat, curr_quat, curr_quat);
-  }
-
-  // Update mouse point
-  prevMouseX = mouse_x;
-  prevMouseY = mouse_y;
 }
 
 static size_t ComponentTypeByteSize(int type) {
@@ -1124,111 +965,23 @@ static void SetupMorphTextures(tinygltf::Model &model, const MorphTargetInfo& mo
   glBindTexture(GL_TEXTURE_2D_ARRAY, gMeshState[mesh.name].morphTex);
 }
 
-int main(int argc, char **argv) {
-  if (argc < 2) {
-    std::cout << "glview input.gltf <scale>" << std::endl;
-    std::cout << "defaulting to example cube model" << std::endl;
-  }
+MorphTargetInfo morphTargetInfo;
+GLuint MatrixID;
+bool FaceShaderInited = false;
 
-  float scale = 1.0f;
-  if (argc > 2) {
-    scale = atof(argv[2]);
-  }
-
-  tinygltf::Model model;
-  tinygltf::TinyGLTF loader;
-  std::string err;
-  std::string warn;
-
-#ifdef _WIN32
-#ifdef _DEBUG
-  std::string input_filename(argv[1] ? argv[1]
-                                     : "../../../models/Cube/Cube.gltf");
-#endif
-#else
-  std::string input_filename(argv[1] ? argv[1] : "../../models/Cube/Cube.gltf");
-#endif
-
-  std::string ext = GetFilePathExtension(input_filename);
-
-  bool ret = false;
-  if (ext.compare("glb") == 0) {
-    // assume binary glTF.
-    ret = loader.LoadBinaryFromFile(&model, &err, &warn, input_filename.c_str());
-  } else {
-    // assume ascii glTF.
-    ret = loader.LoadASCIIFromFile(&model, &err, &warn, input_filename.c_str());
-  }
-
-  if (!warn.empty()) {
-    printf("Warn: %s\n", warn.c_str());
-  }
-
-  if (!err.empty()) {
-    printf("ERR: %s\n", err.c_str());
-  }
-  if (!ret) {
-    printf("Failed to load .glTF : %s\n", argv[1]);
-    exit(-1);
-  }
-
+int InitFace() {
   trackball(curr_quat, 0, 0, 0, 0);
 
-  // DBG
-  PrintNodes(model.scenes[model.defaultScene > -1 ? model.defaultScene : 0]);
-
-  if (!glfwInit()) {
-    std::cerr << "Failed to initialize GLFW." << std::endl;
-    return -1;
-  }
-
-  std::stringstream ss;
-  ss << "Simple glTF viewer: " << input_filename;
-
-  std::string title = ss.str();
-
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-#ifdef __APPLE__
-  std::cout << "I'm apple machine" << std::endl;
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
-  if (window == NULL) {
-    std::cerr << "Failed to open GLFW window. " << std::endl;
-    glfwTerminate();
-    return 1;
-  }
-
-  glfwGetWindowSize(window, &width, &height);
-
-  glfwMakeContextCurrent(window);
-
-  // Callback
-  glfwSetWindowSizeCallback(window, reshapeFunc);
-  glfwSetKeyCallback(window, keyboardFunc);
-  glfwSetMouseButtonCallback(window, clickFunc);
-  glfwSetCursorPosCallback(window, motionFunc);
-
-  glewExperimental = true;  // This may be only true for linux environment.
-  if (glewInit() != GLEW_OK) {
-    std::cerr << "Failed to initialize GLEW." << std::endl;
-    return -1;
-  }
-
-  reshapeFunc(window, width, height);
-
   auto morphTargets = findAllMorphTargets(model);
-  MorphTargetInfo morphTargetInfo = buildMorphTargetTexture(model, morphTargets);
+  morphTargetInfo = buildMorphTargetTexture(model, morphTargets);
   size_t morphTargetCount = 0;
   if (!morphTargets.empty())
     morphTargetCount = morphTargets.begin()->second.size();
   std::stringstream shaderDefs;
-  shaderDefs << "#version 330 core" << std::endl;
+  shaderDefs << "#version 300 es" << std::endl;
   shaderDefs << "#define MORPHTARGETS_COUNT " << morphTargetCount << std::endl;
   shaderDefs << "#define MORPHTARGETS_TEXTURE_STRIDE " << morphTargetInfo.vertexDataCount << std::endl;
-  
+
   GLuint vertId = 0, fragId = 0, progId = 0;
   if (false == LoadShader(GL_VERTEX_SHADER, vertId, shaderDefs.str() + shaderVetex)) {
     return -1;
@@ -1263,58 +1016,83 @@ int main(int argc, char **argv) {
   SetupMorphTextures(model, morphTargetInfo, progId);
   CheckErrors("SetupMorphTextures");
   // SetupCurvesState(model, progId);
-  GLuint MatrixID = glGetUniformLocation(progId, "modelViewProjectionMatrix");
+  MatrixID = glGetUniformLocation(progId, "modelViewProjectionMatrix");
 
   std::cout << "# of meshes = " << model.meshes.size() << std::endl;
+  return 1;
+}
 
-  BlendShapesInfluences shapes;
-
-  double previousTime = glfwGetTime();
-  double startTime = previousTime;
-  double animationStart = startTime;
-  int frameCount = 0;
-  float animationTime = 0.5f;
-  std::vector<std::string> animationNames = {"jawOpen", "eyeBlinkLeft", "eyeBlinkRight",
-    "eyeWideLeft", "eyeWideRight", "tongueOut", "eyeLookInRight", "browDownRight", "noseSneerLeft"};
-  int curr = 0;
-  
-  while (glfwWindowShouldClose(window) == GL_FALSE) {
-    glfwPollEvents();
-    glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnable(GL_DEPTH_TEST);
-
-    GLfloat mat[4][4];
-    build_rotmatrix(mat, curr_quat);
-    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mat[0][0]);
-
-    DrawModel(model, morphTargetInfo);
-
-    glFlush();
-
-    glfwSwapBuffers(window);
-
-    double currentTime = glfwGetTime();
-    
-    double delta = 0.5 + 0.5 * sin(PI * (currentTime - startTime) / animationTime - PI / 2);
-//    std::cout << "delta=" << delta << std::endl;
-    shapes.influences[animationNames[curr]] = delta;
-    morphTargetInfo.applyFaceMesh(shapes);
-    if (delta < 0.1 && (currentTime - animationStart) > animationTime / 2) {
-      shapes.influences[animationNames[curr]] = 0;
-      curr = (curr + 1) % (animationNames.size());
-      std::cout << "curr=" << curr << std::endl;
-      animationStart = currentTime;
-    }
-    
-    frameCount++;
-    if (currentTime - previousTime >= 1.0f) {
-      std::cout << "rendering fps: " << frameCount << std::endl;
-      frameCount = 0;
-      previousTime = currentTime;
-    }
+int UpdateFace() {
+  if(!FaceShaderInited) {
+    InitFace();
+    FaceShaderInited = true;
   }
 
-  glfwTerminate();
+  BlendShapesInfluences shapes;
+  glClearColor(0.1f, 0.2f, 0.3f, 0.5f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glEnable(GL_DEPTH_TEST);
+  //
+  GLfloat mat[4][4];
+  build_rotmatrix(mat, curr_quat);
+
+  std::ostringstream oss;
+  oss << "Float Array: [";
+  for(int i =0; i<BlendShapeKeyList.size(); i++) {
+    oss << BlendShapeKeyList[i];
+    oss << " = ";
+    oss << BlendShapesValue[i];
+    if (i < 51) {
+      oss << ", ";
+    }
+    shapes.influences[BlendShapeKeyList[i]] = BlendShapesValue[i];
+  }
+  oss << "]";
+  //__android_log_print(ANDROID_LOG_INFO, "AndyTest", "BlendShapedValue %s",oss.str().c_str() );
+
+  GLfloat  resultMatrix[4][4] = {0};
+  mat[3][3] = -1.0f;
+
+  matrixMultiply(FacialTransformationMatrix, mat, resultMatrix);
+
+  for(int i =0; i<4; i++) {
+    std::ostringstream oss2;
+    oss2 << "Mat Array: [";
+    for (int j = 0; j < 4; j++) {
+      oss2 << mat[i][j];
+      if(j < 3) {
+        oss2 << ", ";
+      }
+    }
+    oss2 << " ]";
+    //__android_log_print(ANDROID_LOG_INFO, "AndyTest", "%s",oss2.str().c_str() );
+  }
+  //__android_log_print(ANDROID_LOG_INFO, "AndyTest","" );
+  resultMatrix[3][0] = 0.0f;
+  resultMatrix[3][1] = 0.0f;
+  resultMatrix[3][2] = 0.0f;
+  resultMatrix[3][3] = 1.0f;
+
+  glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &resultMatrix[0][0]);
+
+    if(BlendShapeKeyList.size() > 0) {
+      std::ostringstream oss;
+      oss << "Float Array: [";
+        for(int i =0; i<BlendShapeKeyList.size(); i++) {
+          oss << BlendShapeKeyList[i];
+          oss << " = ";
+          oss << BlendShapesValue[i];
+          if (i < 51) {
+            oss << ", ";
+          }
+          shapes.influences[BlendShapeKeyList[i]] = BlendShapesValue[i];
+        }
+      oss << "]";
+      //__android_log_print(ANDROID_LOG_INFO, "AndyTest", "BlendShapedValue %s",oss.str().c_str() );
+    }
+    morphTargetInfo.applyFaceMesh(shapes);
+    DrawModel(model, morphTargetInfo);
+    glFlush();
+  return 1;
 }

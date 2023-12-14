@@ -23,9 +23,16 @@ android {
     namespace 'com.google.mediapipe.examples.facelandmarker'
     compileSdk 33
 
+    externalNativeBuild {
+        cmake {
+            version "3.22.1"
+            path "../cartoon_head/CMakeLists.txt"
+        }
+    }
+
     defaultConfig {
         applicationId "com.google.mediapipe.examples.facelandmarker"
-        minSdk 24
+        minSdk 31
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -38,19 +45,17 @@ android {
 
         externalNativeBuild {
             cmake {
-                version "3.22.1"
                 cppFlags "-std=c++11"
                 arguments "-DANDROID_STL=c++_shared"
             }
         }
     }
 
-    externalNativeBuild {
-        cmake {
-            version "3.22.1"
-            path "../cartoon_head/CMakeLists.txt"
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
         }
-    }
+   }
 
     buildTypes {
         release {
@@ -59,11 +64,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
     buildFeatures {
         viewBinding true

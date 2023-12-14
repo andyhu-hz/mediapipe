@@ -296,3 +296,14 @@ void build_rotmatrix(float m[4][4], const float q[4]) {
   m[3][2] = 0.0;
   m[3][3] = 1.0;
 }
+
+void matrixMultiply(const float matrix1[4][4], const float matrix2[4][4], float result[4][4]) {
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      result[i][j] = 0.0f;
+      for (int k = 0; k < 4; ++k) {
+        result[i][j] += matrix1[i][k] * matrix2[k][j];
+      }
+    }
+  }
+}

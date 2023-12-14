@@ -16,29 +16,66 @@
 
 package com.google.mediapipe.examples.facelandmarker.fragment
 
+import android.os.Build
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
+import com.google.mediapipe.examples.facelandmarker.OverlayView
 import com.google.mediapipe.examples.facelandmarker.databinding.FaceBlendshapesResultBinding
 import com.google.mediapipe.tasks.components.containers.Category
 import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarkerResult
+import com.google.protobuf.LazyStringArrayList
+import java.util.Optional
+import kotlin.jvm.internal.Intrinsics
+
 
 class FaceBlendshapesResultAdapter :
     RecyclerView.Adapter<FaceBlendshapesResultAdapter.ViewHolder>() {
     companion object {
         private const val NO_VALUE = "--"
     }
+    external fun NativeSetBlendshapeAndMatrixed(blendshapes: FloatArray, matrix: FloatArray)
+    external fun NativeSetBlendshapeKey(blendshapeKey: MutableList<String>);
 
     private var categories: MutableList<Category?> = MutableList(52) { null }
 
+    val blendshapeKey: MutableList<String> = MutableList(52) { "" }
+    val blendshapeValue: FloatArray = FloatArray(52){0.0f}
+    val FacialTransformationMatrix: FloatArray = FloatArray(16){0.0f}
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun updateResults(faceLandmarkerResult: FaceLandmarkerResult? = null) {
         categories = MutableList(52) { null }
         if (faceLandmarkerResult != null) {
             val sortedCategories = faceLandmarkerResult.faceBlendshapes().get()[0].sortedBy { -it.score() }
             val min = kotlin.math.min(sortedCategories.size, categories.size)
+
             for (i in 0 until min) {
                 categories[i] = sortedCategories[i]
+                blendshapeKey[i] = sortedCategories[i].categoryName();
+                blendshapeValue[i] = sortedCategories[i].score();
             }
+
+            val matrixes = faceLandmarkerResult.facialTransformationMatrixes();
+            if (!matrixes.isEmpty()) {
+                for(i in 0 until 15) {
+                    FacialTransformationMatrix[i] = matrixes.get()[0][i];
+                }
+            }
+
+            //val aString = "Float Array: [${blendshapeKey.joinToString(", ")}]"
+            //Log.i("AndyTest", "Java -- Blendshape key : "  + aString )
+
+            //val arrayString = "Float Array: [${blendshapeValue.joinToString(", ")}]"
+            //Log.i("AndyTest", "Java -- Blendshape Value : "  + arrayString )
+
+            //val array2String = "Float Array: [${FacialTransformationMatrix.joinToString(", ")}]"
+            //Log.e("AndyTest", "Java -- Blendshape Matrix : "  + array2String )
+
+            NativeSetBlendshapeKey(blendshapeKey);
+            NativeSetBlendshapeAndMatrixed(blendshapeValue, FacialTransformationMatrix)
         }
     }
 

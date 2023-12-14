@@ -73,3 +73,5 @@ void build_rotmatrix(float m[4][4], const float q[4]);
  * expressed in radians.  The result is put into the third argument.
  */
 void axis_to_quat(float a[3], float phi, float q[4]);
+
+void matrixMultiply(const float matrix1[4][4], const float matrix2[4][4], float result[4][4]);
