@@ -28,7 +28,7 @@ int UpdateFace();
 #endif
 
 void updateSize(int width, int height) {
-    glViewport(-250, -200, 1100, 1100);
+    glViewport(0, -250, 1100, 1100);
 }
 
 

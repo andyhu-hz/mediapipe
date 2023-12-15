@@ -1029,70 +1029,34 @@ int UpdateFace() {
   }
 
   BlendShapesInfluences shapes;
-  glClearColor(0.1f, 0.2f, 0.3f, 0.5f);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.3f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glEnable(GL_DEPTH_TEST);
-  //
+
   GLfloat mat[4][4];
   build_rotmatrix(mat, curr_quat);
 
-  std::ostringstream oss;
-  oss << "Float Array: [";
-  for(int i =0; i<BlendShapeKeyList.size(); i++) {
-    oss << BlendShapeKeyList[i];
-    oss << " = ";
-    oss << BlendShapesValue[i];
-    if (i < 51) {
-      oss << ", ";
-    }
-    shapes.influences[BlendShapeKeyList[i]] = BlendShapesValue[i];
-  }
-  oss << "]";
-  //__android_log_print(ANDROID_LOG_INFO, "AndyTest", "BlendShapedValue %s",oss.str().c_str() );
+  //Flip
+  mat[0][0] = -mat[0][0];
+  mat[0][3] = -mat[0][3];
 
   GLfloat  resultMatrix[4][4] = {0};
-  mat[3][3] = -1.0f;
-
   matrixMultiply(FacialTransformationMatrix, mat, resultMatrix);
 
-  for(int i =0; i<4; i++) {
-    std::ostringstream oss2;
-    oss2 << "Mat Array: [";
-    for (int j = 0; j < 4; j++) {
-      oss2 << mat[i][j];
-      if(j < 3) {
-        oss2 << ", ";
-      }
-    }
-    oss2 << " ]";
-    //__android_log_print(ANDROID_LOG_INFO, "AndyTest", "%s",oss2.str().c_str() );
-  }
-  //__android_log_print(ANDROID_LOG_INFO, "AndyTest","" );
   resultMatrix[3][0] = 0.0f;
   resultMatrix[3][1] = 0.0f;
   resultMatrix[3][2] = 0.0f;
   resultMatrix[3][3] = 1.0f;
 
   glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &resultMatrix[0][0]);
-
-    if(BlendShapeKeyList.size() > 0) {
-      std::ostringstream oss;
-      oss << "Float Array: [";
-        for(int i =0; i<BlendShapeKeyList.size(); i++) {
-          oss << BlendShapeKeyList[i];
-          oss << " = ";
-          oss << BlendShapesValue[i];
-          if (i < 51) {
-            oss << ", ";
-          }
-          shapes.influences[BlendShapeKeyList[i]] = BlendShapesValue[i];
-        }
-      oss << "]";
-      //__android_log_print(ANDROID_LOG_INFO, "AndyTest", "BlendShapedValue %s",oss.str().c_str() );
+  if(BlendShapeKeyList.size() > 0) {
+    for(int i =0; i<BlendShapeKeyList.size(); i++) {
+      shapes.influences[BlendShapeKeyList[i]] = BlendShapesValue[i];
     }
-    morphTargetInfo.applyFaceMesh(shapes);
-    DrawModel(model, morphTargetInfo);
-    glFlush();
+  }
+  morphTargetInfo.applyFaceMesh(shapes);
+  DrawModel(model, morphTargetInfo);
+  glFlush();
   return 1;
 }
