@@ -7,3 +7,19 @@ MediaPipe Solutions streamlines on-device ML development and deployment with fle
 * MediaPipe Tasks (low-code): create and deploy custom e2e ML solution pipelines
 * MediaPipe Model Maker (low-code): create custom ML models from advanced solutions
 * MediaPipe Studio (no-code): create, evaluate, debug, benchmark, prototype, deploy advanced production-level solutions
+
+
+
+
+
+
+
+1. The virtual face demo path is : mediapipe/examples/face_landmarker/android
+	
+2. ENV config:
+   Android Studio 2022.3.1 Patch 2
+   Android Gradle Plugin 8.1
+   CMake Version 3.27.9
+   JDK version: 17
+   
+
