@@ -20,27 +20,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <FrameLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.google.mediapipe.examples.facelandmarker.OverlayView
-            android:id="@+id/overlay"
-            android:layout_width="match_parent"
-            android:layout_height="490dp"
-            android:layout_weight="1"
-            app:scaleType="fillStart" />
-
         <androidx.camera.view.PreviewView
             android:id="@+id/view_finder"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            app:scaleType="fillStart" />
-
-
-    </LinearLayout>
+            android:layout_height="match_parent" />
+        <com.google.mediapipe.examples.facelandmarker.OverlayView
+            android:id="@+id/overlay"
+            android:layout_marginBottom="100dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
 
     <include
         android:id="@+id/bottom_sheet_layout"

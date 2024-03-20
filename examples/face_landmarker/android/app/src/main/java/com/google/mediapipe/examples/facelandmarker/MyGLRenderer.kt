@@ -1,15 +1,12 @@
 package com.google.mediapipe.examples.facelandmarker
 
-import android.content.res.AssetManager
 import android.opengl.GLES30
-import android.opengl.GLSurfaceView
 import android.opengl.Matrix
-import android.util.Log
+import com.google.mediapipe.examples.facelandmarker.widget.GLTextureView.Renderer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
-import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 
-class MyGLRenderer : GLSurfaceView.Renderer {
+class MyGLRenderer : Renderer {
 
     external fun NativeSurfaceCreate();
     external fun NativeSurfaceChange(width:Int, height:Int);
@@ -42,4 +39,6 @@ class MyGLRenderer : GLSurfaceView.Renderer {
         // Perform OpenGL ES 3.0 rendering here
         NativeOnFrame()
     }
+
+    override fun onSurfaceDestroyed(gl: GL10?) {}
 }

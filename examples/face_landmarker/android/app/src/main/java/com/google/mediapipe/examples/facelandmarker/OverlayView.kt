@@ -33,9 +33,10 @@ import kotlin.math.min
 import android.content.res.AssetManager
 import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.mediapipe.examples.facelandmarker.widget.GLTextureView
 
 class OverlayView(context: Context?, attrs: AttributeSet? = null) :
-    GLSurfaceView(context, attrs) {
+    GLTextureView(context, attrs) {
 
     private var results: FaceLandmarkerResult? = null
     private var linePaint = Paint()
@@ -46,7 +47,7 @@ class OverlayView(context: Context?, attrs: AttributeSet? = null) :
     private var imageHeight: Int = 1
 
     init {
-        setEGLContextClientVersion(3);
+        setVersion(GLESVersion.OpenGLES20)
         // Set the renderer
         setRenderer(MyGLRenderer())
         initPaints()
@@ -76,36 +77,36 @@ class OverlayView(context: Context?, attrs: AttributeSet? = null) :
         pointPaint.style = Paint.Style.FILL
     }
 
-    override fun draw(canvas: Canvas) {
-        super.draw(canvas)
-        if(results == null || results!!.faceLandmarks().isEmpty()) {
-            clear()
-            return
-        }
-        results?.let { faceLandmarkerResult ->
-            if( faceLandmarkerResult.faceBlendshapes().isPresent) {
-                faceLandmarkerResult.faceBlendshapes().get().forEach {
-                    it.forEach {
-                        Log.e(TAG, it.displayName() + " " + it.score())
-                    }
-                }
-            }
-            for(landmark in faceLandmarkerResult.faceLandmarks()) {
-                for(normalizedLandmark in landmark) {
-                    canvas.drawPoint(normalizedLandmark.x() * imageWidth * scaleFactor, normalizedLandmark.y() * imageHeight * scaleFactor, pointPaint)
-                }
-            }
-
-            FaceLandmarker.FACE_LANDMARKS_CONNECTORS.forEach {
-                canvas.drawLine(
-                    faceLandmarkerResult.faceLandmarks().get(0).get(it!!.start()).x() * imageWidth * scaleFactor,
-                    faceLandmarkerResult.faceLandmarks().get(0).get(it.start()).y() * imageHeight * scaleFactor,
-                    faceLandmarkerResult.faceLandmarks().get(0).get(it.end()).x() * imageWidth * scaleFactor,
-                    faceLandmarkerResult.faceLandmarks().get(0).get(it.end()).y() * imageHeight * scaleFactor,
-                    linePaint)
-            }
-        }
-    }
+//    override fun draw(canvas: Canvas) {
+//        super.draw(canvas)
+//        if(results == null || results!!.faceLandmarks().isEmpty()) {
+//            clear()
+//            return
+//        }
+//        results?.let { faceLandmarkerResult ->
+//            if( faceLandmarkerResult.faceBlendshapes().isPresent) {
+//                faceLandmarkerResult.faceBlendshapes().get().forEach {
+//                    it.forEach {
+//                        Log.e(TAG, it.displayName() + " " + it.score())
+//                    }
+//                }
+//            }
+//            for(landmark in faceLandmarkerResult.faceLandmarks()) {
+//                for(normalizedLandmark in landmark) {
+//                    canvas.drawPoint(normalizedLandmark.x() * imageWidth * scaleFactor, normalizedLandmark.y() * imageHeight * scaleFactor, pointPaint)
+//                }
+//            }
+//
+//            FaceLandmarker.FACE_LANDMARKS_CONNECTORS.forEach {
+//                canvas.drawLine(
+//                    faceLandmarkerResult.faceLandmarks().get(0).get(it!!.start()).x() * imageWidth * scaleFactor,
+//                    faceLandmarkerResult.faceLandmarks().get(0).get(it.start()).y() * imageHeight * scaleFactor,
+//                    faceLandmarkerResult.faceLandmarks().get(0).get(it.end()).x() * imageWidth * scaleFactor,
+//                    faceLandmarkerResult.faceLandmarks().get(0).get(it.end()).y() * imageHeight * scaleFactor,
+//                    linePaint)
+//            }
+//        }
+//    }
 
     fun setResults(
         faceLandmarkerResults: FaceLandmarkerResult,
