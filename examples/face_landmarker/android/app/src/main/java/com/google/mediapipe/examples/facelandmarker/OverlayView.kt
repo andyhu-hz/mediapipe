@@ -132,6 +132,7 @@ class OverlayView(context: Context?, attrs: AttributeSet? = null) :
             }
         }
         invalidate()
+        requestDrawFrame()
     }
 
     companion object {
